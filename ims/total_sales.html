@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Total Sales</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(to bottom right, #001f3f, #ff4136, #ffb6c1); 
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            width: 80%;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            border: 2px solid #aaa;
+        }
+
+        th,
+        td {
+            border: 2px solid #aaa;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        .clear-btn {
+            padding: 10px 20px;
+            background-color: #c0392b;
+            color: #ffffff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        .clear-btn:hover {
+            background-color: #e74c3c;
+        }
+
+        .filter-container {
+            margin-bottom: 20px;
+        }
+
+        .filter-container select {
+            margin-right: 10px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2>Total Sales</h2>
+        <div class="filter-container">
+            <label for="deleteRowSelect">Select Row to Delete:</label>
+            <select id="deleteRowSelect">
+                <option value="" selected disabled>Select Row</option>
+            </select>
+            <button class="clear-btn" onclick="deleteSelectedRow()">Delete Selected Row</button>
+        </div>
+        <table id="salesTable">
+            <thead>
+                <tr>
+                    <th>No</th>
+                    <th>Product ID</th>
+                    <th>Product Name</th>
+                    <th>Quantity</th>
+                    <th>Expiry Date</th>
+                    <th>Price per Unit</th>
+                    <th>Total Price</th>
+                    <th>Profit per Unit</th>
+                    <th>Total Profit</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!--dynamically stored-->
+            </tbody>
+        </table>
+    </div>
+
+    <script>
+        function renderSalesTable() {
+            var salesData = JSON.parse(localStorage.getItem('totalSales')) || [];
+            var mergedData = mergeProducts(salesData);
+            var tableBody = document.querySelector('#salesTable tbody');
+            tableBody.innerHTML = '';
+
+            mergedData.forEach(function (item, index) {
+                var totalPrice = item.quantity * item.pricePerUnit;
+                var totalProfit = item.quantity * item.profitPerUnit;
+                var row = `<tr>
+                            <td>${index + 1}</td>
+                            <td>${item.id}</td>
+                            <td>${item.name}</td>
+                            <td>${item.quantity}</td>
+                            <td>${item.expiryDate}</td>
+                            <td>${item.pricePerUnit}</td>
+                            <td>${totalPrice.toFixed(2)}</td>
+                            <td>${item.profitPerUnit}</td>
+                            <td>${totalProfit.toFixed(2)}</td>
+                        </tr>`;
+                tableBody.insertAdjacentHTML('beforeend', row);
+
+                // Populate select dropdown with row numbers
+                var option = document.createElement('option');
+                option.value = index;
+                option.textContent = `Row ${index + 1}`;
+                document.getElementById('deleteRowSelect').appendChild(option);
+            });
+        }
+
+        function mergeProducts(data) {
+            var mergedData = [];
+
+            data.forEach(function (item) {
+                var existingProduct = mergedData.find(function (p) {
+                    return p.id === item.id && p.name === item.name;
+                });
+
+                if (existingProduct) {
+                    existingProduct.quantity += item.quantity;
+                    existingProduct.pricePerUnit = item.pricePerUnit; 
+                    existingProduct.profitPerUnit = item.profitPerUnit;
+                } else {
+                    mergedData.push(item);
+                }
+            });
+
+            return mergedData;
+        }
+
+        function deleteSelectedRow() {
+            var select = document.getElementById('deleteRowSelect');
+            var selectedIndex = select.value;
+
+            if (selectedIndex !== '') {
+                var salesData = JSON.parse(localStorage.getItem('totalSales')) || [];
+                salesData.splice(selectedIndex, 1);
+                localStorage.setItem('totalSales', JSON.stringify(salesData));
+                renderSalesTable();
+                select.options[selectedIndex].remove(); // Remove the deleted row from the select options
+            } else {
+                alert('Please select a row to delete.');
+            }
+        }
+
+        renderSalesTable();
+    </script>
+</body>
+
+</html>
